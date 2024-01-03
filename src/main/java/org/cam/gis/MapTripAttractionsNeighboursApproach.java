@@ -7,22 +7,19 @@ import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geopkg.FeatureEntry;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Polygon;
 import org.opengis.feature.simple.SimpleFeature;
 import org.geotools.geopkg.GeoPackage;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 import org.opengis.referencing.FactoryException;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+// ok
 
 
 public class MapTripAttractionsNeighboursApproach {
@@ -36,7 +33,7 @@ public class MapTripAttractionsNeighboursApproach {
         List<SimpleFeature> polygons = new ArrayList<>();
         List<OAitem> OAitems = new ArrayList<>();
 
-        Integer i = 0, counter = 0;
+        int counter = 0;
 
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.setName("oas");
@@ -55,17 +52,17 @@ public class MapTripAttractionsNeighboursApproach {
             while (r.hasNext()) {
                 SimpleFeature polygon = r.next();
                 polygons.add(polygon);
-                i++;
+                //i++;
             }
             r.close();
             geopkg.close();
-            i = 0;
+            //i = 0;
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        double testValue = 0.0, mmax = 0.0;
+        //double testValue = 0.0;
 
         // Test all the combinations
         for (SimpleFeature target : polygons) {
@@ -79,16 +76,11 @@ public class MapTripAttractionsNeighboursApproach {
 
             for (SimpleFeature neighbor : polygons) {
                 if (isNeighbor((Geometry) target.getAttribute("geom"), (Geometry) neighbor.getAttribute("geom")) && (!target.getAttribute("OA11CD").toString().equals(neighbor.getAttribute("OA11CD").toString()))) {
-                    mmax = (double) neighbor.getAttribute("shop");
-                    // log.info(mmax);
-                    if (mmax > testValue) {
-                        testValue = mmax;
-                        log.warn(testValue);
-                    }
+
                     OAitems.get(lastIndex).add(neighbor);
-                    i++;
+                    //i++;
                 }
-                ;
+
             }
             OAitems.get(lastIndex).update();
             //OAitems.add(oa);
@@ -101,7 +93,6 @@ public class MapTripAttractionsNeighboursApproach {
             }
 
              */
-
 
             if (LongMath.isPowerOfTwo(counter)) {
                 log.info("Processing output area " + counter + " / " + polygons.size());
@@ -121,30 +112,9 @@ public class MapTripAttractionsNeighboursApproach {
             f.neighbours.forEach(e -> System.out.println(e.getAttribute("shop")));
             log.info(f.columnsToBeAggregated.get("shop"));
             log.info("==");
-
-
-
         }
 
          */
-
-
-
-        // Printing processed OA
-        /*
-        for (OAitem oa : OAitems.values()) {
-            oa.update();
-        }*/
-
-        /*
-
-        for (OAitem oa : OAitems.values()) {
-            oa.neighbours.forEach(nn -> System.out.println(nn.getAttribute("escort")));
-            System.out.println("=======");
-        }
-
-         */
-
 
         // Write Geopackage
         String outputEdgesFilePath = "destination_choice/coefficients/mapped_OA_weighted_quasiOA.gpkg";
@@ -153,10 +123,10 @@ public class MapTripAttractionsNeighboursApproach {
             log.warn("File " + outputEdgesFile.getAbsolutePath() + " already exists. Overwriting.");
         }
 
-        final GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory(); // final -> define an entity that can only be assigned once
+        // final GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory(); // final -> define an entity that can only be assigned once
         //final SimpleFeatureType TYPE = polygons.get(1).getFeatureType(); polygons.values().
         // final SimpleFeatureType TYPE = createFeatureType();
-        final SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE);
+        // final SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE);
         DefaultFeatureCollection collection = new DefaultFeatureCollection("Polygons", TYPE);
 
         // Geometry
