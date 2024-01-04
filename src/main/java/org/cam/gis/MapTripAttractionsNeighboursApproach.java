@@ -19,21 +19,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-// ok
-
-
 public class MapTripAttractionsNeighboursApproach {
     private final static Logger log = Logger.getLogger(MapTripAttractionsNeighboursApproach.class);
 
     public static void main(String[] args) throws FactoryException {
 
-        //Map<String, SimpleFeature> polygons = new HashMap<>();
-        //Map<String, OAitem> OAitems = new HashMap<>();
-
         List<SimpleFeature> polygons = new ArrayList<>();
         List<OAitem> OAitems = new ArrayList<>();
 
-        int counter = 0;
+        String InputFilePath = "destination_choice/coefficients/mapped_OA_weighted_sp.gpkg";
+        String outputFilePath = "destination_choice/coefficients/mapped_OA_weighted_quasiOA.gpkg";
+
+        int counter = 0, lastIndex;
 
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.setName("oas");
@@ -42,106 +39,55 @@ public class MapTripAttractionsNeighboursApproach {
 
         // Create a Map and store all the polygons as Simplefeature
         try {
-
-            // /Users/ismailsaadi/Cambridge/jibe/destination_choice/coefficients/predicted_attractions_OA.gpkg
-            // destination_choice/observed_attractions/attractions_OA.gpkg
-            GeoPackage geopkg = new GeoPackage(new File("destination_choice/coefficients/mapped_OA_weighted_sp.gpkg"));
+            GeoPackage geopkg = new GeoPackage(new File(InputFilePath));
             SimpleFeatureReader r = geopkg.reader(geopkg.features().get(0), null, null);
             TYPE = r.getFeatureType();
 
             while (r.hasNext()) {
                 SimpleFeature polygon = r.next();
                 polygons.add(polygon);
-                //i++;
             }
             r.close();
             geopkg.close();
-            //i = 0;
-
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        //double testValue = 0.0;
-
         // Test all the combinations
         for (SimpleFeature target : polygons) {
-            // Create new OA item
-            //OAitem oa = new OAitem(target);
-
             OAitems.add(new OAitem(copySimpleFeature(target)));
 
             // Get the last element
-            int lastIndex = OAitems.size() - 1;
+            lastIndex = OAitems.size() - 1;
 
             for (SimpleFeature neighbor : polygons) {
                 if (isNeighbor((Geometry) target.getAttribute("geom"), (Geometry) neighbor.getAttribute("geom")) && (!target.getAttribute("OA11CD").toString().equals(neighbor.getAttribute("OA11CD").toString()))) {
-
                     OAitems.get(lastIndex).add(neighbor);
-                    //i++;
                 }
-
             }
             OAitems.get(lastIndex).update();
-            //OAitems.add(oa);
-
             counter++;
-
-            /*
-            if (counter > 200) {
-                break;
-            }
-
-             */
 
             if (LongMath.isPowerOfTwo(counter)) {
                 log.info("Processing output area " + counter + " / " + polygons.size());
             }
         }
 
-        // TEST
-        /*
-
-        log.info("***************************TEST***************************");
-        log.info(OAitems.size());
-        for(OAitem f: OAitems){
-            //f.neighbours.forEach(e -> System.out.println(e.getAttribute("shop")));
-            //f.update();
-
-            log.info("==");
-            f.neighbours.forEach(e -> System.out.println(e.getAttribute("shop")));
-            log.info(f.columnsToBeAggregated.get("shop"));
-            log.info("==");
-        }
-
-         */
-
         // Write Geopackage
-        String outputEdgesFilePath = "destination_choice/coefficients/mapped_OA_weighted_quasiOA.gpkg";
-        File outputEdgesFile = new File(outputEdgesFilePath);
-        if (outputEdgesFile.delete()) {
-            log.warn("File " + outputEdgesFile.getAbsolutePath() + " already exists. Overwriting.");
+        File outputFile = new File(outputFilePath);
+        if (outputFile.delete()) {
+            log.warn("File " + outputFile.getAbsolutePath() + " already exists. Overwriting.");
         }
 
-        // final GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory(); // final -> define an entity that can only be assigned once
-        //final SimpleFeatureType TYPE = polygons.get(1).getFeatureType(); polygons.values().
-        // final SimpleFeatureType TYPE = createFeatureType();
-        // final SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(TYPE);
         DefaultFeatureCollection collection = new DefaultFeatureCollection("Polygons", TYPE);
 
         // Geometry
         for (OAitem polygon : OAitems) {
-            //polygon.newOA
-            //featureBuilder.add(geometryFactory.createMultiPolygon()); // todo: check how to add polygon
-            //featureBuilder.add("EA1");
-            //SimpleFeature feature = featureBuilder.buildFeature(null);
-            //collection.add(feature);
             collection.add(polygon.getNewFeature());
         }
 
-
         try {
-            GeoPackage out = new GeoPackage(outputEdgesFile);
+            GeoPackage out = new GeoPackage(outputFile);
             out.init();
             FeatureEntry entry = new FeatureEntry();
             entry.setDescription("network");
@@ -158,7 +104,6 @@ public class MapTripAttractionsNeighboursApproach {
     }
 
     /*
-
     private static SimpleFeatureType createFeatureType() throws FactoryException {
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.setName("oas");
@@ -195,7 +140,6 @@ public class MapTripAttractionsNeighboursApproach {
 
         return builder.buildFeatureType();
     }
-
      */
     public static boolean isNeighbor(Geometry target, Geometry neighbor) {
         return target.touches(neighbor);
